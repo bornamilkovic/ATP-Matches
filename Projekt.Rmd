@@ -8,17 +8,167 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(dplyr)
+
 ```
 
 # Dekriptivna analiza i vizualizacija podataka
+
+Učitavanje podataka i pregled podatkovnog okvira:
 
 ```{r}
 # učitavanje podatkovnog okvira
 matches <- list.files("data/", pattern = "\\.csv$", full.names = TRUE) %>% map_df(read_csv, show_col_types = FALSE) %>% suppressWarnings()
 
 glimpse(matches)
-head(matches)
-tail(matches)
+names(matches)
+
+
+
+```
+
+```{r}
+faktori <- c("tourney_name", "surface", "draw_size", "tourney_level", "winner_hand", "winner_ioc", "loser_hand", "best_of", "round")
+matches[faktori] <- lapply(matches[faktori], as.factor)
+sapply(matches, class)
+```
+
+
+
+
+```{r}
+#deskriptivna statistika
 summary(matches)
 ```
 
+
+```{r}
+head(matches)
+tail(matches)
+```
+
+
+```{r}
+
+
+sapply(matches, function(x) sum(is.na(x)))
+
+```
+
+varijable za prvo pitanje: winner_hand, tourney_level
+
+varijable za drugo pitanje: surface, minutes
+
+varijable za trece pitanje: w_aces + l_aces, surface
+
+varijable za cetvrto pitanje: minutes, w_SvGms, l_Svgms, w_df, l_df,  w_aces, l_aces
+
+
+
+# Je li distribucija pobjeda po ruci kojom se igra povezana s vrstom turnira?
+
+
+```{r}
+levels(matches$winner_hand)
+levels(matches$tourney_level)
+```
+
+```{r}
+table(matches$winner_hand)
+table(matches$tourney_level)
+```
+
+
+Uređujemo podatke za prvo pitanje
+```{r}
+matches$tourney_name %>% unique() %>% length()
+matches$tourney_level %>% unique() %>% length()
+```
+
+Gledamo koliko ima nedostajućih ili nepoznatih vrijednosti za pobjedu po ruci, izbacujemo te podatke s obzirom da ih je mali broj (12 + 2014).
+```{r}
+matches$winner_hand %>% is.na() %>% sum() 
+table(matches$winner_hand)["U"]
+
+matches1 <- matches[is.na(matches$winner_hand) == F, ]
+matches1 <- matches1[matches1$winner_hand != 'U', ]
+
+table(matches1$winner_hand)
+matches1$winner_hand <- as.factor(matches1$winner_hand)
+```
+
+
+```{r}
+tablica_ruka = table(matches1$winner_hand)
+tablica_vrsta_turnira = table(matches1$tourney_level)
+
+tbl = table(matches1$winner_hand, matches1$tourney_level)[-4, ]
+tbl
+
+added_margins_tbl = addmargins(tbl)
+print(added_margins_tbl)
+
+for (col_names in colnames(added_margins_tbl)){
+  for (row_names in rownames(added_margins_tbl)){
+    if (!(row_names == 'Sum' | col_names == 'Sum') ){
+      cat('Očekivane frekvencije za razred ',col_names,'-',row_names,': ',(added_margins_tbl[row_names,'Sum'] * added_margins_tbl['Sum',col_names]) / added_margins_tbl['Sum','Sum'],'\n')
+    }
+  }
+}
+
+```
+
+Vidimo da nam dvije očekivane frekvencije nisu veće od 5 stoga se odlučujemo izbaciti opažanja za A....
+
+```{r}
+matches1 <- matches1[matches1$winner_hand != 'A', ]
+tbl = table(matches1$winner_hand, matches1$tourney_level)[-c(1, 4), ]
+tbl
+added_margins_tbl = addmargins(tbl)
+print(added_margins_tbl)
+
+for (col_names in colnames(added_margins_tbl)){
+  for (row_names in rownames(added_margins_tbl)){
+    if (!(row_names == 'Sum' | col_names == 'Sum') ){
+      cat('Očekivane frekvencije za razred ',col_names,'-',row_names,': ',(added_margins_tbl[row_names,'Sum'] * added_margins_tbl['Sum',col_names]) / added_margins_tbl['Sum','Sum'],'\n')
+    }
+  }
+}
+
+```
+
+Sada kada su sve očekivane frekvencije veće od 5 nastavljamo s Chi^2 testom.
+
+```{r}
+chisq.test(tbl,correct=F)
+```
+Odbacujemo H0 u korist H1 .
+
+
+
+
+# Imaju li mečevi odigrani na travi prosječno manje gemova od mečeva na zemlji?
+
+koraci:
+- pogledaj dataset
+- test za varijance
+- 
+
+```{r}
+table(matches$surface)
+
+matches2 <- mutate(matches, games = matches$w_SvGms + matches$l_SvGms)
+# izbaci NA vrijednosti
+
+clay_matches = matches2[matches2$surface == "Clay", ]
+grass_matches = matches2[matches2$surface == "Grass", ]
+
+
+cat('Prosječna  ', mean(clay_matches$games),'\n')
+
+```
+
+
+
+# Mijenja li se prosječan broj aseva po meču ovisno o vrsti podloge?
+# Možemo li predvidjeti trajanje meča (u minutama) na temelju broja gemova, aseva i dvostrukih pogrešaka?
