@@ -2,7 +2,9 @@
 title: "ATP Analiza mečeva"
 author: "Milković Borna, Radovanović Filip, Rimac Kal, Zdenčar Noa"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -67,6 +69,9 @@ varijable za cetvrto pitanje: minutes, w_SvGms, l_Svgms, w_df, l_df,  w_aces, l_
 
 # Je li distribucija pobjeda po ruci kojom se igra povezana s vrstom turnira?
 
+S obzirom na to da pitanje ukazuje na ispitivanje zavisnosti dvije varijable, kako bismo našli odgovor koristit ćemo Chi2 test nezavisnosti. Nužan uvjet za korištenje ovog testa je da su sve očekivane vrijednosti izračunate iz kontingencijske tablice veće od 5.
+
+Za početak gledamo moguće vrijednosti obje varijable i njihovu zastupljenost u uzorku.
 
 ```{r}
 levels(matches$winner_hand)
@@ -78,14 +83,7 @@ table(matches$winner_hand)
 table(matches$tourney_level)
 ```
 
-
-Uređujemo podatke za prvo pitanje
-```{r}
-matches$tourney_name %>% unique() %>% length()
-matches$tourney_level %>% unique() %>% length()
-```
-
-Gledamo koliko ima nedostajućih ili nepoznatih vrijednosti za pobjedu po ruci, izbacujemo te podatke s obzirom da ih je mali broj (12 + 2014).
+Gledamo koliko ima nedostajućih ili nepoznatih("U") vrijednosti za pobjedu po ruci i izbacujemo te podatke s obzirom da čine mali udio podataka ((12 + 2014)/194379).
 ```{r}
 matches$winner_hand %>% is.na() %>% sum() 
 table(matches$winner_hand)["U"]
@@ -97,7 +95,7 @@ table(matches1$winner_hand)
 matches1$winner_hand <- as.factor(matches1$winner_hand)
 ```
 
-
+Gradimo kontingencijsku tablicu i računamo očekivane vrijednosti kako bismo provjerili da su sve veće od 5.
 ```{r}
 tablica_ruka = table(matches1$winner_hand)
 tablica_vrsta_turnira = table(matches1$tourney_level)
@@ -118,7 +116,7 @@ for (col_names in colnames(added_margins_tbl)){
 
 ```
 
-Vidimo da nam dvije očekivane frekvencije nisu veće od 5 stoga se odlučujemo izbaciti opažanja za A....
+Nalazimo dvije vrijednosti manje od 5, opažamo da obje pripadaju retku A(ambidextrous), a s obzirom da ti podaci čine tek nekolicinu cijelog uzorka(njih 100 od 192353) odlučujemo ih izbaciti. Ponovno gradimo kontingencijsku tablicu i računamo očekivane vrijednosti.
 
 ```{r}
 matches1 <- matches1[matches1$winner_hand != 'A', ]
@@ -137,36 +135,121 @@ for (col_names in colnames(added_margins_tbl)){
 
 ```
 
-Sada kada su sve očekivane frekvencije veće od 5 nastavljamo s Chi^2 testom.
+Sada su sve očekivane frekvencije veće od 5, nastavljamo s Chi2 testom.
+Hipoteze:
+  H0: Distribucija pobjeda po ruci nije povezana s vrstom turnira(varijable su nezavisne).
+  H1: Distribucija pobjeda po ruci je povezana s vrstom turnira(varijable nisu nezavisne).
+
+Test provodimo na razini značajnosti alfa = 0.05.
 
 ```{r}
 chisq.test(tbl,correct=F)
 ```
-Odbacujemo H0 u korist H1 .
-
+S obzirom da je p-vrijednost << 0.05, odbacujemo H0 u korist H1 i zaključujemo da je distribucija pobjeda po ruci povezana s vrstom turnira.
 
 
 
 # Imaju li mečevi odigrani na travi prosječno manje gemova od mečeva na zemlji?
 
-koraci:
-- pogledaj dataset
-- test za varijance
-- 
+U ovom pitanju traži se usporedba srednjih vrijednosti dvije populacije, za što je prikladno koristiti t-test. T-test ima dvije varijante, ovisno o tome jesu li varijance populacija jednake ili različite. Osim toga, zahtjeva da uzorci dolaze iz nezavisnih normalno distribuiranih populacija.
 
+
+Kako u podacima nema atributa koji navodi ukupan broj gemova po meču, računamo ga iz stupaca w_SvGms i l_SvGms. Osim toga, čistimo podatke od nedokumentiranih vrijednosti i dijelimo ih po vrsti podloge.
 ```{r}
 table(matches$surface)
 
-matches2 <- mutate(matches, games = matches$w_SvGms + matches$l_SvGms)
 # izbaci NA vrijednosti
+matches2 <- matches[is.na(matches$surface) == F & is.na(matches$w_SvGms) == F & is.na(matches$l_SvGms) == F,]
+
+#dodaj stupac s ukupnim brojem gemova
+matches2 <- mutate(matches2, games = matches2$w_SvGms + matches2$l_SvGms)
+
 
 clay_matches = matches2[matches2$surface == "Clay", ]
 grass_matches = matches2[matches2$surface == "Grass", ]
 
 
-cat('Prosječna  ', mean(clay_matches$games),'\n')
+cat('Prosječan broj gemova odigranih na zemlji', mean(clay_matches$games),'\n')
+cat('Prosječan broj gemova odigranih na travi', mean(grass_matches$games),'\n')
+
+boxplot(clay_matches$games, grass_matches$games, 
+        names = c('Broj gemova na zemlji','Broj gemova na travi'),
+        main='Boxplot - broj gemova na zemlji i travi')
+```
+Na grafu se ističu izrazito stršeće vrijednosti, stoga ćemo ukloniti sve vrijednosti veće od 65, što je ujedno i maksimalni broj gemova u današnjem tenisu.
+
+```{r}
+ind <- which(matches2$games > 65)
+matches2 <- matches2[-ind,]
+
+clay_matches = matches2[matches2$surface == "Clay", ]
+grass_matches = matches2[matches2$surface == "Grass", ]
+
+boxplot(clay_matches$games, grass_matches$games, 
+        names = c('Broj gemova na zemlji','Broj gemova na travi'),
+        main='Boxplot - broj gemova na zemlji i travi')
+```
+Grafovi upućuju na to da bi prosječan broj gemova odigran na travnatim podlogama mogao biti veći od prosječnog broja gemova odigranih na zemljanim podlogama.
+
+
+Provjera normalnosti uzorka:
+
+```{r}
+hist(clay_matches$games, 
+     breaks=seq(min(clay_matches$games) -1,max(clay_matches$games) + 2,6),
+     main='Histogram broja gemova odigranih na zemlji',
+     xlab='Broj gemova', ylab='Frekvencija')
+```
+```{r}
+hist(grass_matches$games, 
+     breaks=seq(min(grass_matches$games) -2,max(grass_matches$games) + 2,6),
+     main='Histogram broja gemova odigranih na travi',
+     xlab='Broj gemova', ylab='Frekvencija')
+```
+
+```{r}
+qqnorm(clay_matches$games, pch = 1, frame = FALSE,main='Gemovi na zemlji')
+qqline(clay_matches$games, col = "steelblue", lwd = 2)
+```
+```{r}
+qqnorm(grass_matches$games, pch = 1, frame = TRUE,main='Gemovi na travi')
+qqline(grass_matches$games, col = "steelblue", lwd = 2)
+```
+Unatoč manjem odstupanju, pretpostavljamo normalnost. Kako se broj gemova mjeri po meču, vrijednosti su međusobno nezavisne jer mečevi nemaju međusobnog utjecaja. Uz zadovoljene pretpostavke, trebamo ustanoviti odnos varijanci populacija kako bismo znali koju inačicu t-testa primijeniti. Za to ćemo provesti Fischerov test o jednakosti varijanci dviju populacija.
+
+```{r}
+var(clay_matches$games)
+```
+```{r}
+var(grass_matches$games)
+```
+Temeljem gornjeg rezultata sumnjamo na različitost varijanci populacija. Provodimo Fischerov test da potvrdimo sumnju.
+
+Hipoteze Fischerovog testa jednakosti varijanci:
+  H0: Varijance su jednake
+  H1: Varijance su različite
+
+Test provodimo na razini značajnosti alfa = 0.05.
+
+```{r}
+var.test(clay_matches$games, grass_matches$games)
+```
+S obzirom na to da je p-vrijednost << 0.05, odbacujemo H0 u korist H1. Zaključujemo da su varijance uzoraka različite.
+
+
+Kako bismo odgovorili na pitanje o broju gemova na travi i zemlji, provodimo t-test s pretpostavkom različitih varijanci.
+
+Hipoteze:
+  H0: Prosječan broj gemova je jednak na zemlji i na travi.
+  H1: Prosječan broj gemova je manji na travi, nego na zemlji.
+
+Test provodimo na razini značajnosti alfa = 0.05.
+```{r}
+t.test(grass_matches$games, clay_matches$games, alt = "less", var.equal = FALSE)
 
 ```
+Na temelju rezultata ne možemo odbaciti H0 i ne možemo zaključiti da je prosječan broj gemova na travi manji od prosječnog broja gemova na zemlji.
+
 
 
 
