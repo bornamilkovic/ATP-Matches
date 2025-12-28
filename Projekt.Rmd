@@ -41,8 +41,8 @@ Skup podataka se pretežito sastoji od “integer” i “factor” podataka.
 ```{r}
 glimpse(matches)
 
-head(matches)
-tail(matches)
+# head(matches)
+# tail(matches)
 ```
 Vidimo da puno podataka nedostaje (barem u prvih nekoliko redaka). Provjerimo koliko je ukupno nedostajućih vrijednosti za pojedinu varijablu.
 
@@ -53,11 +53,7 @@ for (col_name in names(matches)){
   }
 }
 ```
-```{r}
-cat('\n Dimenzija podataka: ', dim(matches))
-```
 Iz priloženog možemo vidjeti da najviše podataka nedostaje za varijable winner_entry, loser_seed i loser_entry (više od 80%), no te varijable nećemo niti koristiti u analizi mečeva tako da ih nećemo uklanjati. Velik broj podataka nedostaje i kod ostalih varijabli poput statistike servisa i poena, trajanja meča, rankinga, bodova... Većina tih podataka nedostaje na početku dataseta u kojem se nalaze podaci još od 1968. godine (početak Open ere) kada se ti podaci nisu bilježili ni mjerili, dok su npr. ATP rankinzi uvedeni tek 1973. godine.
-
 
 Promotrimo sada kako izgledaju neke od varijabli nad kojima ćemo kasnije provesti analizu.
 
