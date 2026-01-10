@@ -98,10 +98,10 @@ hist(log(matches$w_df + matches$l_df), main = "Ukupno dvostrukih pogrešaka po m
 
 total_gems <- matches$w_SvGms + matches$l_SvGms
 cutoff <- quantile(total_gems, 0.99, na.rm = TRUE)
-hist(total_gems[total_gems <= cutoff], main = "Ukupno gemova po meču (≤ 99th percentile)", xlab = "Gemovi", ylab = "Frekvencija", breaks = 30)
+hist(total_gems[total_gems <= cutoff], main = "Ukupno gemova po meču (<= 99th percentile)", xlab = "Gemovi", ylab = "Frekvencija", breaks = 30)
 
 cutoff <- quantile(matches$minutes, 0.99, na.rm = TRUE)
-hist(matches$minutes[matches$minutes <= cutoff], main = "Trajanje meča (u minutama) (≤ 99th percentile)", xlab = "Minute", ylab = "Frekvencija", breaks = 30)
+hist(matches$minutes[matches$minutes <= cutoff], main = "Trajanje meča (u minutama) (<= 99th percentile)", xlab = "Minute", ylab = "Frekvencija", breaks = 30)
 ```
 Podaci ne izgledaju daleko od normalne distribucije, no postoje odstupanja zbog nekih ekstremnih vrijednosti i zbog toga što se u skupu podataka nalaze podaci o mečevima koji su igrani i do 2 i do 3 osvojena seta.
 
