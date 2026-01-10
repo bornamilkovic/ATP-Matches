@@ -32,17 +32,17 @@ Te varijable i njihove klase (tipovi) su sljedeće:
 faktori <- c("tourney_name", "surface", "draw_size", "tourney_level", "winner_hand", "winner_ioc", "loser_hand", "best_of", "round")
 matches[faktori] <- lapply(matches[faktori], as.factor)
 sapply(matches, class)
-
-# View(matches)
-# names(matches)
 ```
-Skup podataka se pretežito sastoji od “integer” i “factor” podataka.
+Skup podataka se pretežito sastoji od “integer” i “factor” podataka. Pretvorili smo sami neke varijable u kategorijske podatke ("factor") jer one ne predstavljaju brojčane vrijednosti već kategorije. Programski paket R nudi široku podršku za rad s kategorijskim podatcima - od factor tipa podataka, do raznih statističkih alata i testova za analizu kategorijskih varijabli.
 
 ```{r}
-glimpse(matches)
+print('Prvih nekoliko redaka u varijablama koje koristimo: ')
+str(matches[, c("winner_hand", "tourney_level", "surface",
+                "minutes",
+                "w_SvGms", "l_SvGms",
+                "w_df", "l_df",
+                "w_ace", "l_ace")])
 
-# head(matches)
-# tail(matches)
 ```
 Vidimo da puno podataka nedostaje (barem u prvih nekoliko redaka). Provjerimo koliko je ukupno nedostajućih vrijednosti za pojedinu varijablu.
 
@@ -53,7 +53,7 @@ for (col_name in names(matches)){
   }
 }
 ```
-Iz priloženog možemo vidjeti da najviše podataka nedostaje za varijable winner_entry, loser_seed i loser_entry (više od 80%), no te varijable nećemo niti koristiti u analizi mečeva tako da ih nećemo uklanjati. Velik broj podataka nedostaje i kod ostalih varijabli poput statistike servisa i poena, trajanja meča, rankinga, bodova... Većina tih podataka nedostaje na početku dataseta u kojem se nalaze podaci još od 1968. godine (početak Open ere) kada se ti podaci nisu bilježili ni mjerili, dok su npr. ATP rankinzi uvedeni tek 1973. godine.
+Iz priloženog možemo vidjeti da najviše podataka nedostaje za varijable winner_entry, loser_seed i loser_entry (više od 80%), no te varijable nećemo niti koristiti u analizi mečeva tako da ih nećemo uklanjati. Velik broj podataka nedostaje i kod ostalih varijabli poput statistike servisa i poena, trajanja meča, rankinga, bodova... Većina tih podataka nedostaje na početku skupa podataka u kojem se nalaze podaci još od 1968. godine (početak Open ere) kada se ti podaci nisu bilježili ni mjerili, dok su npr. ATP rankinzi uvedeni tek 1973. godine.
 
 Promotrimo sada kako izgledaju neke od varijabli nad kojima ćemo kasnije provesti analizu.
 
@@ -103,7 +103,7 @@ hist(total_gems[total_gems <= cutoff], main = "Ukupno gemova po meču (≤ 99th 
 cutoff <- quantile(matches$minutes, 0.99, na.rm = TRUE)
 hist(matches$minutes[matches$minutes <= cutoff], main = "Trajanje meča (u minutama) (≤ 99th percentile)", xlab = "Minute", ylab = "Frekvencija", breaks = 30)
 ```
-Podaci ne izgledaju daleko od normalne distribucije, no postoje odstupanja zbog nekih ekstremnih vrijednosti i zbog toga što se u datasetu nalaze podaci o mečevima koji su igrani i do 2 i do 3 osvojena seta na što moramo pripaziti pri analizi i možda podijeliti podatke na best_of 3 i best_of 5.
+Podaci ne izgledaju daleko od normalne distribucije, no postoje odstupanja zbog nekih ekstremnih vrijednosti i zbog toga što se u skupu podataka nalaze podaci o mečevima koji su igrani i do 2 i do 3 osvojena seta.
 
 Promotrimo sada kategoričke varijable.
 
@@ -114,18 +114,18 @@ table(matches$winner_hand)
 Primijetimo da varijabla “winner_hand” sadrži i igrače s nedefiniranom (U) preferiranom rukom te igrače koji udaraju lopticu s obje ruke - samo forehandom (A) pa trebamo paziti na te varijable u daljnjoj analizi.
 
 ```{r}
-barplot(table(matches$tourney_level),las=2,main='Broj mečeva po vrsti turnira')
+barplot(table(matches$tourney_level),las=2,main='Broj mečeva po razini turnira')
 ```
 ```{r}
-print('Broj mečeva po vrsti turnira: ')
+print('Broj mečeva po razini turnira: ')
 table(matches$tourney_level)
 ```
 ```{r}
-barplot(table(unique(matches[, c("tourney_id", "tourney_level")])$tourney_level),las=2,main='Broj turnira na pojedinoj vrsti')
+barplot(table(unique(matches[, c("tourney_id", "tourney_level")])$tourney_level),las=2,main='Broj turnira po razini turnira')
 ```
 
 ```{r}
-print('Broj turnira na pojedinoj vrsti: ')
+print('Broj turnira po razini turnira: ')
 table(unique(matches[, c("tourney_id", "tourney_level")])$tourney_level)
 ```
 Turniri su podijeljeni na 6 kategorija ovisno o jačini i vrsti turnira: ATP 250 (i 500), Davis Cup, ATP Finals, Grand Slam, Masters 1000 i Olympics. ATP 250/500 mečeva ima daleko najviše jer ima jako puno tih turnira kroz godinu i postoje već dugo godina dok je mečeva na Olimpijskih igrama i ATP Finalsu vrlo malo zbog toga što su to rijetki događaji s manjim brojem sudionika.
