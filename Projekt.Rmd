@@ -3,14 +3,16 @@ title: "ATP Analiza mečeva"
 author: "Milković Borna, Radovanović Filip, Rimac Kal, Zdenčar Noa"
 date: "`r Sys.Date()`"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(dplyr)
+library(ggplot2)
+library(gridExtra)
 
 ```
 
@@ -81,33 +83,40 @@ summary(
 Promotrimo najprije numeričke varijable.
 
 ```{r}
-hist(matches$w_ace + matches$l_ace, main = "Ukupno aseva po meču", xlab = "Asevi", ylab = "Frekvencija", breaks = 50)
+par(mfrow = c(2, 2))
+h1 <- hist(matches$w_ace + matches$l_ace, main = "Ukupno aseva po meču", xlab = "Asevi", ylab = "Frekvencija", breaks = 50)
 
-hist(matches$w_df + matches$l_df, main = "Ukupno dvostrukih pogrešaka po meču", xlab = "Dvostruke pogrešake", ylab = "Frekvencija", breaks = 50)
+h2 <- hist(matches$w_df + matches$l_df, main = "Ukupno dvostrukih pogrešaka po meču", xlab = "Dvostruke pogrešake", ylab = "Frekvencija", breaks = 50)
 
-hist(matches$w_SvGms + matches$l_SvGms, main = "Ukupno gemova po meču", xlab = "Gemovi", ylab = "Frekvencija", breaks = 50)
+h3 <- hist(matches$w_SvGms + matches$l_SvGms, main = "Ukupno gemova po meču", xlab = "Gemovi", ylab = "Frekvencija", breaks = 50)
 
-hist(matches$minutes, main = "Trajanje meča (u minutama)", xlab = "Minute", ylab = "Frekvencija", breaks = 50)
+h4 <- hist(matches$minutes, main = "Trajanje meča (u minutama)", xlab = "Minute", ylab = "Frekvencija", breaks = 50)
+
+
 ```
+
 Pokušajmo log transformacijom i izbacivanjem ekstremnih vrijednosti približiti podatke normalnoj distribuciji.
 
 ```{r}
-hist(log(matches$w_ace + matches$l_ace), main = "Ukupno aseva po meču", xlab = "Asevi", ylab = "Frekvencija", breaks = 10)
+par(mfrow = c(2, 2))
+h_log1 <- hist(log(matches$w_ace + matches$l_ace), main = "Ukupno aseva po meču", xlab = "Asevi", ylab = "Frekvencija", breaks = 10)
 
-hist(log(matches$w_df + matches$l_df), main = "Ukupno dvostrukih pogrešaka po meču", xlab = "Dvostruke pogreške", ylab = "Frekvencija", breaks = 10)
+h_log2 <- hist(log(matches$w_df + matches$l_df), main = "Ukupno dvostrukih pogrešaka po meču", xlab = "Dvostruke pogreške", ylab = "Frekvencija", breaks = 10)
 
 total_gems <- matches$w_SvGms + matches$l_SvGms
 cutoff <- quantile(total_gems, 0.99, na.rm = TRUE)
-hist(total_gems[total_gems <= cutoff], main = "Ukupno gemova po meču (<= 99th percentile)", xlab = "Gemovi", ylab = "Frekvencija", breaks = 30)
+h_log3 <- hist(total_gems[total_gems <= cutoff], main = "Ukupno gemova po meču (<= P99)", xlab = "Gemovi", ylab = "Frekvencija", breaks = 30)
 
 cutoff <- quantile(matches$minutes, 0.99, na.rm = TRUE)
-hist(matches$minutes[matches$minutes <= cutoff], main = "Trajanje meča (u minutama) (<= 99th percentile)", xlab = "Minute", ylab = "Frekvencija", breaks = 30)
+h_log4 <- hist(matches$minutes[matches$minutes <= cutoff], main = "Trajanje meča (u minutama) (<= P99)", xlab = "Minute", ylab = "Frekvencija", breaks = 30)
+
 ```
+
 Podaci ne izgledaju daleko od normalne distribucije, no postoje odstupanja zbog nekih ekstremnih vrijednosti i zbog toga što se u skupu podataka nalaze podaci o mečevima koji su igrani i do 2 i do 3 osvojena seta.
 
 Promotrimo sada kategoričke varijable.
 
-```{r}
+```{r, results = "hold"}
 print('Pobjednikova preferirana ruka: ')
 table(matches$winner_hand)
 ```
@@ -116,15 +125,15 @@ Primijetimo da varijabla “winner_hand” sadrži i igrače s nedefiniranom (U)
 ```{r}
 barplot(table(matches$tourney_level),las=2,main='Broj mečeva po razini turnira')
 ```
-```{r}
+```{r, results = "hold"}
 print('Broj mečeva po razini turnira: ')
 table(matches$tourney_level)
 ```
 ```{r}
-barplot(table(unique(matches[, c("tourney_id", "tourney_level")])$tourney_level),las=2,main='Broj turnira po razini turnira')
+barplot(table(unique(matches[, c("tourney_id", "tourney_level")])$tourney_level), las=2, main='Broj turnira po razini turnira')
 ```
 
-```{r}
+```{r, results = "hold"}
 print('Broj turnira po razini turnira: ')
 table(unique(matches[, c("tourney_id", "tourney_level")])$tourney_level)
 ```
@@ -138,7 +147,7 @@ Isto tako, ovdje vidimo vrste turnira i broj setova koji se igra na pojedinom tu
 ```{r}
 barplot(table(matches$surface),las=2,main='Broj mečeva na svakoj podlozi')
 ```
-```{r}
+```{r, results = "hold"}
 print('Broj mečeva na svakoj podlozi: ')
 table(matches$surface)
 ```
@@ -146,7 +155,7 @@ table(matches$surface)
 barplot(table(unique(matches[, c("tourney_id", "surface")])$surface),las=2,main='Broj turnira na svakoj podlozi')
 ```
 
-```{r}
+```{r, results = "hold"}
 print('Broj turnira na svakoj podlozi: ')
 table(unique(matches[, c("tourney_id", "surface")])$surface)
 ```
@@ -264,6 +273,7 @@ boxplot(clay_matches$games, grass_matches$games,
         names = c('Broj gemova na zemlji','Broj gemova na travi'),
         main='Boxplot - broj gemova na zemlji i travi')
 ```
+
 Na grafu se ističu izrazito stršeće vrijednosti, stoga ćemo ukloniti sve vrijednosti veće od 65, što je ujedno i maksimalni broj gemova u današnjem tenisu.
 
 ```{r}
@@ -277,6 +287,7 @@ boxplot(clay_matches$games, grass_matches$games,
         names = c('Broj gemova na zemlji','Broj gemova na travi'),
         main='Boxplot - broj gemova na zemlji i travi')
 ```
+
 Grafovi upućuju na to da bi prosječan broj gemova odigran na travnatim podlogama mogao biti veći od prosječnog broja gemova odigranih na zemljanim podlogama.
 
 
@@ -287,12 +298,13 @@ hist(clay_matches$games,
      breaks=seq(min(clay_matches$games) -1,max(clay_matches$games) + 2,6),
      main='Histogram broja gemova odigranih na zemlji',
      xlab='Broj gemova', ylab='Frekvencija')
-```
-```{r}
 hist(grass_matches$games, 
      breaks=seq(min(grass_matches$games) -2,max(grass_matches$games) + 2,6),
      main='Histogram broja gemova odigranih na travi',
      xlab='Broj gemova', ylab='Frekvencija')
+```
+```{r}
+
 ```
 
 ```{r}
@@ -303,6 +315,7 @@ qqline(clay_matches$games, col = "steelblue", lwd = 2)
 qqnorm(grass_matches$games, pch = 1, frame = TRUE,main='Gemovi na travi')
 qqline(grass_matches$games, col = "steelblue", lwd = 2)
 ```
+
 Unatoč manjem odstupanju, pretpostavljamo normalnost. Kako se broj gemova mjeri po meču, vrijednosti su međusobno nezavisne jer mečevi nemaju međusobnog utjecaja. Uz zadovoljene pretpostavke, trebamo ustanoviti odnos varijanci populacija kako bismo znali koju inačicu t-testa primijeniti. Za to ćemo provesti Fischerov test o jednakosti varijanci dviju populacija.
 
 ```{r}
