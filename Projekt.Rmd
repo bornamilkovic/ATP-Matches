@@ -3,8 +3,8 @@ title: "ATP Analiza mečeva"
 author: "Milković Borna, Radovanović Filip, Rimac Kal, Zdenčar Noa"
 date: "`r Sys.Date()`"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -84,13 +84,13 @@ Promotrimo najprije numeričke varijable.
 
 ```{r}
 par(mfrow = c(2, 2))
-h1 <- hist(matches$w_ace + matches$l_ace, main = "Ukupno aseva po meču", xlab = "Asevi", ylab = "Frekvencija", breaks = 50)
+h1 <- hist(matches$w_ace + matches$l_ace, main = "Ukupno aseva po mecu", xlab = "Asevi", ylab = "Frekvencija", breaks = 50)
 
-h2 <- hist(matches$w_df + matches$l_df, main = "Ukupno dvostrukih pogrešaka po meču", xlab = "Dvostruke pogrešake", ylab = "Frekvencija", breaks = 50)
+h2 <- hist(matches$w_df + matches$l_df, main = "Ukupno dvostrukih pogresaka po mecu", xlab = "Dvostruke pogreske", ylab = "Frekvencija", breaks = 50)
 
-h3 <- hist(matches$w_SvGms + matches$l_SvGms, main = "Ukupno gemova po meču", xlab = "Gemovi", ylab = "Frekvencija", breaks = 50)
+h3 <- hist(matches$w_SvGms + matches$l_SvGms, main = "Ukupno gemova po mecu", xlab = "Gemovi", ylab = "Frekvencija", breaks = 50)
 
-h4 <- hist(matches$minutes, main = "Trajanje meča (u minutama)", xlab = "Minute", ylab = "Frekvencija", breaks = 50)
+h4 <- hist(matches$minutes, main = "Trajanje meca (u minutama)", xlab = "Minute", ylab = "Frekvencija", breaks = 50)
 
 
 ```
@@ -99,16 +99,16 @@ Pokušajmo log transformacijom i izbacivanjem ekstremnih vrijednosti približiti
 
 ```{r}
 par(mfrow = c(2, 2))
-h_log1 <- hist(log(matches$w_ace + matches$l_ace), main = "Ukupno aseva po meču", xlab = "Asevi", ylab = "Frekvencija", breaks = 10)
+h_log1 <- hist(log(matches$w_ace + matches$l_ace), main = "Ukupno aseva po mecu", xlab = "Asevi", ylab = "Frekvencija", breaks = 10)
 
-h_log2 <- hist(log(matches$w_df + matches$l_df), main = "Ukupno dvostrukih pogrešaka po meču", xlab = "Dvostruke pogreške", ylab = "Frekvencija", breaks = 10)
+h_log2 <- hist(log(matches$w_df + matches$l_df), main = "Ukupno dvostrukih pogresaka po mecu", xlab = "Dvostruke pogreske", ylab = "Frekvencija", breaks = 10)
 
 total_gems <- matches$w_SvGms + matches$l_SvGms
 cutoff <- quantile(total_gems, 0.99, na.rm = TRUE)
-h_log3 <- hist(total_gems[total_gems <= cutoff], main = "Ukupno gemova po meču (<= P99)", xlab = "Gemovi", ylab = "Frekvencija", breaks = 30)
+h_log3 <- hist(total_gems[total_gems <= cutoff], main = "Ukupno gemova po mecu (<= P99)", xlab = "Gemovi", ylab = "Frekvencija", breaks = 30)
 
 cutoff <- quantile(matches$minutes, 0.99, na.rm = TRUE)
-h_log4 <- hist(matches$minutes[matches$minutes <= cutoff], main = "Trajanje meča (u minutama) (<= P99)", xlab = "Minute", ylab = "Frekvencija", breaks = 30)
+h_log4 <- hist(matches$minutes[matches$minutes <= cutoff], main = "Trajanje meca (u minutama) (<= P99)", xlab = "Minute", ylab = "Frekvencija", breaks = 30)
 
 ```
 
@@ -123,7 +123,7 @@ table(matches$winner_hand)
 Primijetimo da varijabla “winner_hand” sadrži i igrače s nedefiniranom (U) preferiranom rukom te igrače koji udaraju lopticu s obje ruke - samo forehandom (A) pa trebamo paziti na te varijable u daljnjoj analizi.
 
 ```{r}
-barplot(table(matches$tourney_level),las=2,main='Broj mečeva po razini turnira')
+barplot(table(matches$tourney_level),las=2,main='Broj meceva po razini turnira')
 ```
 ```{r, results = "hold"}
 print('Broj mečeva po razini turnira: ')
@@ -145,7 +145,7 @@ table(matches$tourney_level, matches$best_of)
 Isto tako, ovdje vidimo vrste turnira i broj setova koji se igra na pojedinom turniru (best_of varijabla). Osim već spomenutih best of 3 i best of 5, vidimo da postoje i neki mečevi koji su se igrali na best of 1 (vjerojatno davno igrani ili neki egzibicijski mečevi) koje trebamo ukloniti prilikom analize kasnije. Gotovo svaka vrsta turnira ima podatke i za best of 3 i za best of 5 zbog toga što su se kroz povijest formati turnira znali mijenjati.
 
 ```{r}
-barplot(table(matches$surface),las=2,main='Broj mečeva na svakoj podlozi')
+barplot(table(matches$surface),las=2,main='Broj meceva na svakoj podlozi')
 ```
 ```{r, results = "hold"}
 print('Broj mečeva na svakoj podlozi: ')
@@ -293,28 +293,28 @@ Grafovi upućuju na to da bi prosječan broj gemova odigran na travnatim podloga
 
 Provjera normalnosti uzorka:
 
-```{r}
+```{r, fig.width=8, fig.height=6}
+par(mfrow = c(2, 2), mar = c(4,4,2,1))
 hist(clay_matches$games, 
      breaks=seq(min(clay_matches$games) -1,max(clay_matches$games) + 2,6),
      main='Histogram broja gemova odigranih na zemlji',
      xlab='Broj gemova', ylab='Frekvencija')
+
 hist(grass_matches$games, 
      breaks=seq(min(grass_matches$games) -2,max(grass_matches$games) + 2,6),
      main='Histogram broja gemova odigranih na travi',
      xlab='Broj gemova', ylab='Frekvencija')
-```
-```{r}
 
-```
-
-```{r}
 qqnorm(clay_matches$games, pch = 1, frame = FALSE,main='Gemovi na zemlji')
 qqline(clay_matches$games, col = "steelblue", lwd = 2)
-```
-```{r}
+
 qqnorm(grass_matches$games, pch = 1, frame = TRUE,main='Gemovi na travi')
 qqline(grass_matches$games, col = "steelblue", lwd = 2)
+
 ```
+
+
+
 
 Unatoč manjem odstupanju, pretpostavljamo normalnost. Kako se broj gemova mjeri po meču, vrijednosti su međusobno nezavisne jer mečevi nemaju međusobnog utjecaja. Uz zadovoljene pretpostavke, trebamo ustanoviti odnos varijanci populacija kako bismo znali koju inačicu t-testa primijeniti. Za to ćemo provesti Fischerov test o jednakosti varijanci dviju populacija.
 
@@ -347,12 +347,77 @@ Hipoteze:
 Test provodimo na razini značajnosti alfa = 0.05.
 ```{r}
 t.test(grass_matches$games, clay_matches$games, alt = "less", var.equal = FALSE)
+wilcox.test(grass_matches$games, clay_matches$games, alt = "less" )
 
 ```
-Na temelju rezultata ne možemo odbaciti H0 i ne možemo zaključiti da je prosječan broj gemova na travi manji od prosječnog broja gemova na zemlji.
+Na temelju rezultata ne možemo odbaciti H0 i ne možemo zaključiti da je prosječan broj gemova na travi manji od prosječnog broja gemova na zemlji. S obzirom da se činilo da bi podaci mogli odstupati od normalne razdiobe, za potvrdu rezultata napravili smo i neparematarsku alternativu t-testa. 
 
 
 
 
 # Mijenja li se prosječan broj aseva po meču ovisno o vrsti podloge?
+
+Sutra ....
+
+
+
+
+
+
+
+
+
 # Možemo li predvidjeti trajanje meča (u minutama) na temelju broja gemova, aseva i dvostrukih pogrešaka?
+
+Podaci koji su nam potrebni zapisani su odvojeno za pobjednike i gubitnike pa ih je potrebno zbrojiti u jednu varijablu.
+```{r}
+matches_reg <- matches
+matches_reg$aces <- matches_reg$w_ace + matches_reg$l_ace
+matches_reg$df <- matches_reg$w_df + matches_reg$l_df
+matches_reg$gems <- matches_reg$w_SvGms + matches_reg$l_SvGms
+
+
+```
+
+
+Brišemo nepostojeće vrijednosti iz skupa podataka.
+```{r}
+matches_reg<- matches_reg[is.na(matches_reg$aces) == F & is.na(matches_reg$df) == F & is.na(matches_reg$gems) == F & is.na(matches_reg$minutes)== F, ]
+
+matches_reg[matches_reg$minutes <= 5, ] %>% count()
+
+matches_reg <- matches_reg[matches_reg$minutes > 5 & matches_reg$minutes < 600, ]
+```
+
+
+
+```{r}
+cor(cbind(matches_reg$aces,matches_reg$df,matches_reg$gems)) # korelacijski koeficijenti parova regresora
+```
+```{r}
+fit.multi <- lm(minutes ~ aces + df + gems, matches_reg)
+fit.multi.bezdf <- lm(minutes ~ aces + gems, matches_reg)
+summary(fit.multi)
+summary(fit.multi.bezdf)
+```
+
+Na temelju ispisa funkcije summary na razini značajnosti od 5% ne možemo odbaciti hipotezu da dvostruke pogreške nemaju linearan utjecaj na dani model, odnosno na mi.
+
+
+
+```{r, fig.width=8, fig.height=6}
+par(mfrow = c(2, 2), mar = c(4,4,2,1))
+hist((fit.multi.bezdf$residuals), breaks = 100, xlim = range(-100, 100))
+hist(rstandard(fit.multi.bezdf), breaks = 100, xlim = range(-5, 5))
+
+plot(fit.multi$fitted.values,fit.multi.bezdf$residuals) #reziduali u ovisnosti o procjenama modela
+
+qqnorm(rstandard(fit.multi))
+qqline(rstandard(fit.multi))
+
+ks.test(rstandard(fit.multi.bezdf),'pnorm')
+
+require(nortest)
+lillie.test(rstandard(fit.multi.bezdf))
+
+```
