@@ -3,8 +3,8 @@ title: "ATP Analiza mečeva"
 author: "Milković Borna, Radovanović Filip, Rimac Kal, Zdenčar Noa"
 date: "`r Sys.Date()`"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -13,6 +13,7 @@ library(tidyverse)
 library(dplyr)
 library(ggplot2)
 library(gridExtra)
+library(nortest)
 
 ```
 
@@ -357,13 +358,65 @@ Na temelju rezultata ne možemo odbaciti H0 i ne možemo zaključiti da je prosj
 
 # Mijenja li se prosječan broj aseva po meču ovisno o vrsti podloge?
 
-Sutra ....
+Podatke o ukupnom broju aseva ćemo dobiti zbrajanjem aseva pobjednika i gubitnika, a podatke o vrsti podloge ćemo pretvoriti u kategorijsku varijablu. Također ćemo ukloniti sve nedostajuće vrijednosti i stršeću vrijednost od 216 aseva.
+```{r}
+matches_anova <- matches
+matches_anova$aces <- matches_anova$w_ace + matches_anova$l_ace
+matches_anova$surface <- as.factor(matches_anova$surface)
+
+matches_anova <- matches_anova[is.na(matches_anova$aces) == F & is.na(matches_anova$surface) == F, ]
+matches_anova <- matches_anova[matches_anova$aces < 200, ]
+```
+
+Pretpostavke ANOVA-e su:
+
+- nezavisnost pojedinih podataka u uzorcima,
+- normalna razdioba podataka,
+- homogenost varijanci među populacijama. 
+
+```{r, fig.width=8, fig.height=6}
+matches_anova_log <- matches_anova
+matches_anova_log$aces <- log((matches_anova_log$aces + 1))
+
+table(matches_anova_log$surface)
+
+#ks.test(matches_anova_log$aces[matches_anova_log$surface=='Grass'], 'pnorm')
+
+lillie.test(matches_anova_log$aces)
+
+lillie.test(matches_anova_log$aces[matches_anova_log$surface=='Grass'])
+lillie.test(matches_anova_log$aces[matches_anova_log$surface=='Clay'])
+lillie.test(matches_anova_log$aces[matches_anova_log$surface=='Carpet'])
+lillie.test(matches_anova_log$aces[matches_anova_log$surface=='Hard'])
+
+par(mfrow = c(2, 2), mar = c(4,4,2,1))
+hist(matches_anova_log$aces[matches_anova_log$surface=='Grass'], xlab = "log(aces)", main = "Asevi na travi")
+hist(matches_anova_log$aces[matches_anova_log$surface=='Clay'], xlab = "log(aces)", main = "Asevi na zemlji")
+hist(matches_anova_log$aces[matches_anova_log$surface=='Carpet'], xlab = "log(aces)", main = "Asevi na tepihu")
+hist(matches_anova_log$aces[matches_anova_log$surface=='Hard'], xlab = "log(aces)", main = "Asevi na tvrdoj podlozi")
+```
+
+```{r}
+# Testiranje homogenosti varijance uzoraka Bartlettovim testom
+bartlett.test(matches_anova_log$aces ~ matches_anova_log$surface)
+
+var((matches_anova_log$aces[matches_anova_log$surface=='Grass']))
+var((matches_anova_log$aces[matches_anova_log$surface=='Clay']))
+var((matches_anova_log$aces[matches_anova_log$surface=='Carpet']))
+var((matches_anova_log$aces[matches_anova_log$surface=='Hard']))
+
+```
 
 
+```{r}
+# Graficki prikaz podataka
+boxplot(matches_anova_log$aces ~ matches_anova_log$surface)
 
-
-
-
+# Test
+a = aov(matches_anova_log$aces ~ matches_anova_log$surface)
+summary(a)
+```
+Kal objašnjava ....
 
 
 
@@ -410,14 +463,12 @@ par(mfrow = c(2, 2), mar = c(4,4,2,1))
 hist((fit.multi.bezdf$residuals), breaks = 100, xlim = range(-100, 100))
 hist(rstandard(fit.multi.bezdf), breaks = 100, xlim = range(-5, 5))
 
-plot(fit.multi$fitted.values,fit.multi.bezdf$residuals) #reziduali u ovisnosti o procjenama modela
+plot(fit.multi$fitted.values, fit.multi.bezdf$residuals) #reziduali u ovisnosti o procjenama modela
 
 qqnorm(rstandard(fit.multi))
 qqline(rstandard(fit.multi))
 
-ks.test(rstandard(fit.multi.bezdf),'pnorm')
-
-require(nortest)
+ks.test(rstandard(fit.multi.bezdf), 'pnorm') # diskretne varijable javljaju warning
 lillie.test(rstandard(fit.multi.bezdf))
 
 ```
