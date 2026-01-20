@@ -3,8 +3,8 @@ title: "ATP Analiza mečeva"
 author: "Milković Borna, Radovanović Filip, Rimac Kal, Zdenčar Noa"
 date: "`r Sys.Date()`"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -27,6 +27,7 @@ matches <- list.files("data/", pattern = "\\.csv$", full.names = TRUE) %>% map_d
 
 dim(matches)
 ```
+
 Podatci se sastoje od 194379 mečeva i 49 njihovih opisa (varijabli).
 
 Te varijable i njihove klase (tipovi) su sljedeće:
@@ -36,6 +37,7 @@ faktori <- c("tourney_name", "surface", "draw_size", "tourney_level", "winner_ha
 matches[faktori] <- lapply(matches[faktori], as.factor)
 sapply(matches, class)
 ```
+
 Skup podataka se pretežito sastoji od “integer” i “factor” podataka. Pretvorili smo sami neke varijable u kategorijske podatke ("factor") jer one ne predstavljaju brojčane vrijednosti već kategorije. Programski paket R nudi široku podršku za rad s kategorijskim podatcima - od factor tipa podataka, do raznih statističkih alata i testova za analizu kategorijskih varijabli.
 
 ```{r}
@@ -47,6 +49,7 @@ str(matches[, c("winner_hand", "tourney_level", "surface",
                 "w_ace", "l_ace")])
 
 ```
+
 Vidimo da puno podataka nedostaje (barem u prvih nekoliko redaka). Provjerimo koliko je ukupno nedostajućih vrijednosti za pojedinu varijablu.
 
 ```{r}
@@ -56,6 +59,7 @@ for (col_name in names(matches)){
   }
 }
 ```
+
 Iz priloženog možemo vidjeti da najviše podataka nedostaje za varijable winner_entry, loser_seed i loser_entry (više od 80%), no te varijable nećemo niti koristiti u analizi mečeva tako da ih nećemo uklanjati. Velik broj podataka nedostaje i kod ostalih varijabli poput statistike servisa i poena, trajanja meča, rankinga, bodova... Većina tih podataka nedostaje na početku skupa podataka u kojem se nalaze podaci još od 1968. godine (početak Open ere) kada se ti podaci nisu bilježili ni mjerili, dok su npr. ATP rankinzi uvedeni tek 1973. godine.
 
 Promotrimo sada kako izgledaju neke od varijabli nad kojima ćemo kasnije provesti analizu.
@@ -81,6 +85,7 @@ summary(
   ]
 )
 ```
+
 Promotrimo najprije numeričke varijable.
 
 ```{r}
@@ -121,6 +126,7 @@ Promotrimo sada kategoričke varijable.
 print('Pobjednikova preferirana ruka: ')
 table(matches$winner_hand)
 ```
+
 Primijetimo da varijabla “winner_hand” sadrži i igrače s nedefiniranom (U) preferiranom rukom te igrače koji udaraju lopticu s obje ruke - samo forehandom (A) pa trebamo paziti na te varijable u daljnjoj analizi.
 
 ```{r}
@@ -138,11 +144,13 @@ barplot(table(unique(matches[, c("tourney_id", "tourney_level")])$tourney_level)
 print('Broj turnira po razini turnira: ')
 table(unique(matches[, c("tourney_id", "tourney_level")])$tourney_level)
 ```
+
 Turniri su podijeljeni na 6 kategorija ovisno o jačini i vrsti turnira: ATP 250 (i 500), Davis Cup, ATP Finals, Grand Slam, Masters 1000 i Olympics. ATP 250/500 mečeva ima daleko najviše jer ima jako puno tih turnira kroz godinu i postoje već dugo godina dok je mečeva na Olimpijskih igrama i ATP Finalsu vrlo malo zbog toga što su to rijetki događaji s manjim brojem sudionika.
 
 ```{r}
 table(matches$tourney_level, matches$best_of)
 ```
+
 Isto tako, ovdje vidimo vrste turnira i broj setova koji se igra na pojedinom turniru (best_of varijabla). Osim već spomenutih best of 3 i best of 5, vidimo da postoje i neki mečevi koji su se igrali na best of 1 (vjerojatno davno igrani ili neki egzibicijski mečevi) koje trebamo ukloniti prilikom analize kasnije. Gotovo svaka vrsta turnira ima podatke i za best of 3 i za best of 5 zbog toga što su se kroz povijest formati turnira znali mijenjati.
 
 ```{r}
@@ -164,7 +172,6 @@ table(unique(matches[, c("tourney_id", "surface")])$surface)
 Možemo vidjeti da je najviše mečeva i turnira odigrano na zemlji i tvrdoj podlozi, dok je na travi i tepihu puno manje. Razlog tomu je što se na tvrdoj podlozi može igrati kroz cijelu sezonu (indoor i outdoor), a iako se na zemlji igra samo mali dio sezone (otprilike od travnja do lipnja), taj dio sezone je najintenzivniji i osim velikog broja mečeva po turniru ima i jako puno turnira koji se u to vrijeme igraju uglavnom na zemlji.
 
 
-
 # Je li distribucija pobjeda po ruci kojom se igra povezana s vrstom turnira?
 
 S obzirom na to da pitanje ukazuje na ispitivanje zavisnosti dvije varijable, kako bismo našli odgovor koristit ćemo Chi2 test nezavisnosti. Nužan uvjet za korištenje ovog testa je da su sve očekivane vrijednosti izračunate iz kontingencijske tablice veće od 5.
@@ -182,6 +189,7 @@ table(matches$tourney_level)
 ```
 
 Gledamo koliko ima nedostajućih ili nepoznatih("U") vrijednosti za pobjedu po ruci i izbacujemo te podatke s obzirom da čine mali udio podataka ((12 + 2014)/194379).
+
 ```{r}
 matches$winner_hand %>% is.na() %>% sum() 
 table(matches$winner_hand)["U"]
@@ -194,6 +202,7 @@ matches1$winner_hand <- as.factor(matches1$winner_hand)
 ```
 
 Gradimo kontingencijsku tablicu i računamo očekivane vrijednosti kako bismo provjerili da su sve veće od 5.
+
 ```{r}
 tablica_ruka = table(matches1$winner_hand)
 tablica_vrsta_turnira = table(matches1$tourney_level)
@@ -246,13 +255,13 @@ chisq.test(tbl,correct=F)
 S obzirom da je p-vrijednost << 0.05, odbacujemo H0 u korist H1 i zaključujemo da je distribucija pobjeda po ruci povezana s vrstom turnira.
 
 
-
 # Imaju li mečevi odigrani na travi prosječno manje gemova od mečeva na zemlji?
 
 U ovom pitanju traži se usporedba srednjih vrijednosti dvije populacije, za što je prikladno koristiti t-test. T-test ima dvije varijante, ovisno o tome jesu li varijance populacija jednake ili različite. Osim toga, zahtjeva da uzorci dolaze iz nezavisnih normalno distribuiranih populacija.
 
 
 Kako u podacima nema atributa koji navodi ukupan broj gemova po meču, računamo ga iz stupaca w_SvGms i l_SvGms. Osim toga, čistimo podatke od nedokumentiranih vrijednosti i dijelimo ih po vrsti podloge.
+
 ```{r}
 table(matches$surface)
 
@@ -314,9 +323,6 @@ qqline(grass_matches$games, col = "steelblue", lwd = 2)
 
 ```
 
-
-
-
 Unatoč manjem odstupanju, pretpostavljamo normalnost. Kako se broj gemova mjeri po meču, vrijednosti su međusobno nezavisne jer mečevi nemaju međusobnog utjecaja. Uz zadovoljene pretpostavke, trebamo ustanoviti odnos varijanci populacija kako bismo znali koju inačicu t-testa primijeniti. Za to ćemo provesti Fischerov test o jednakosti varijanci dviju populacija.
 
 ```{r}
@@ -325,6 +331,7 @@ var(clay_matches$games)
 ```{r}
 var(grass_matches$games)
 ```
+
 Temeljem gornjeg rezultata sumnjamo na različitost varijanci populacija. Provodimo Fischerov test da potvrdimo sumnju.
 
 Hipoteze Fischerovog testa jednakosti varijanci:
@@ -336,6 +343,7 @@ Test provodimo na razini značajnosti alfa = 0.05.
 ```{r}
 var.test(clay_matches$games, grass_matches$games)
 ```
+
 S obzirom na to da je p-vrijednost << 0.05, odbacujemo H0 u korist H1. Zaključujemo da su varijance uzoraka različite.
 
 
@@ -346,19 +354,22 @@ Hipoteze:
   H1: Prosječan broj gemova je manji na travi, nego na zemlji.
 
 Test provodimo na razini značajnosti alfa = 0.05.
+
 ```{r}
 t.test(grass_matches$games, clay_matches$games, alt = "less", var.equal = FALSE)
 wilcox.test(grass_matches$games, clay_matches$games, alt = "less" )
 
 ```
+
 Na temelju rezultata ne možemo odbaciti H0 i ne možemo zaključiti da je prosječan broj gemova na travi manji od prosječnog broja gemova na zemlji. S obzirom da se činilo da bi podaci mogli odstupati od normalne razdiobe, za potvrdu rezultata napravili smo i neparematarsku alternativu t-testa. 
-
-
 
 
 # Mijenja li se prosječan broj aseva po meču ovisno o vrsti podloge?
 
+Ispitujemo prosječan broj aseva u ovisnosti o vrsti podloge za što je prikladno korištenje modela jednofaktorske ANOVA-e. Model jednofaktorske ANOVA-e razmatra utjecaj jednog faktora s k razina, pri čemu svaku od k razina tretira kao zasebnu populaciju i uspoređuje srednje vrijednosti tih populacija.
+
 Podatke o ukupnom broju aseva ćemo dobiti zbrajanjem aseva pobjednika i gubitnika, a podatke o vrsti podloge ćemo pretvoriti u kategorijsku varijablu. Također ćemo ukloniti sve nedostajuće vrijednosti i stršeću vrijednost od 216 aseva.
+
 ```{r}
 matches_anova <- matches
 matches_anova$aces <- matches_anova$w_ace + matches_anova$l_ace
@@ -368,19 +379,28 @@ matches_anova <- matches_anova[is.na(matches_anova$aces) == F & is.na(matches_an
 matches_anova <- matches_anova[matches_anova$aces < 200, ]
 ```
 
-Pretpostavke ANOVA-e su:
+Pretpostavke ANOVA-e su nezavisnost podataka u uzorcima, normalna razdioba podataka i homogenost varijanci među populacijama.
+Hipoteze ANOVA testa su:
+  H0: Srednje vrijednosti svih populacija su jednake.
+  H1: Postoji barem jedan par populacija koje imaju različite srednje vrijednosti.
 
-- nezavisnost pojedinih podataka u uzorcima,
-- normalna razdioba podataka,
-- homogenost varijanci među populacijama. 
+U idućem odlomku ispitujemo normalnost pojedinih populacija.
+
+```{r, fig.width=8, fig.height=6}
+par(mfrow = c(2, 2), mar = c(4,4,2,1))
+hist(matches_anova$aces[matches_anova$surface=='Grass'], xlab = "aces", main = "Asevi na travi")
+hist(matches_anova$aces[matches_anova$surface=='Clay'], xlab = "aces", main = "Asevi na zemlji")
+hist(matches_anova$aces[matches_anova$surface=='Carpet'], xlab = "aces", main = "Asevi na tepihu")
+hist(matches_anova$aces[matches_anova$surface=='Hard'], xlab = "aces", main = "Asevi na tvrdoj podlozi")
+```
+
+Uvidom u prikaz podataka da se zaključiti da bi logaritamska transformacija mogla poboljšati normalnost podataka. Osim toga, postoji mogućnost da varijabla broja aseva poprimi vrijednost 0 za što logaritam vraća nepostojeću vrijednost. Kako ne bismo izgubili utjecaj tih podataka na sveukupni model, svakom podatku pridodajemo jedan as što će omogućiti nesmetano korištenje logaritamske transformacije bez posljedica na konačno rješenje modela.
 
 ```{r, fig.width=8, fig.height=6}
 matches_anova_log <- matches_anova
 matches_anova_log$aces <- log((matches_anova_log$aces + 1))
 
 table(matches_anova_log$surface)
-
-#ks.test(matches_anova_log$aces[matches_anova_log$surface=='Grass'], 'pnorm')
 
 lillie.test(matches_anova_log$aces)
 
@@ -396,8 +416,14 @@ hist(matches_anova_log$aces[matches_anova_log$surface=='Carpet'], xlab = "log(ac
 hist(matches_anova_log$aces[matches_anova_log$surface=='Hard'], xlab = "log(aces)", main = "Asevi na tvrdoj podlozi")
 ```
 
+Uvidom na Lillieforsov test može se zaključiti da podatci ne dolaze iz normalne razdiobe, međutim grafovi ukazuju na to da razdioba podataka ne odstupa značajno od normalne razdiobe. Uz to, veličine uzoraka pojedinih kategorija značajno se razlikuju što umanjuje robustnost testa na odstupanje od pretpostavki.
+
+Testiranje homogenosti varijance uzoraka Bartlettovim testom
+Hipoteze Bartlettovog testa su:
+  H0: Varijance svih populacija su jednake.
+  H1: Postoji barem jedan par varijanci populacija koje su različite.
+  
 ```{r}
-# Testiranje homogenosti varijance uzoraka Bartlettovim testom
 bartlett.test(matches_anova_log$aces ~ matches_anova_log$surface)
 
 var((matches_anova_log$aces[matches_anova_log$surface=='Grass']))
@@ -407,22 +433,24 @@ var((matches_anova_log$aces[matches_anova_log$surface=='Hard']))
 
 ```
 
+Bartlettov test ukazuje na nehomogenost varijanci. Unatoč tome, pogledom na vrijednosti varijance populacija vidimo da jedino druga populacija značajno odstupa od ostalih varijanci pa odlučujemo nastaviti s testom.
 
 ```{r}
-# Graficki prikaz podataka
 boxplot(matches_anova_log$aces ~ matches_anova_log$surface)
 
-# Test
 a = aov(matches_anova_log$aces ~ matches_anova_log$surface)
 summary(a)
 ```
-Kal objašnjava ....
 
+ANOVA test ukazuje na to da na razini značajnosti alfa = 0.05 odbacujemo hipotezu H0 u korist H1, odnosno da populacije imaju različite srednje vrijednosti. Dodatno, s obzirom da pretpostavke ANOVA testa nisu u potpunosti zadovoljene odlučujemo prikazati srednje vrijednosti pravokutnim dijagramima koji podupiru rezultate testa. Dakle, ANOVA test ukazuje na to da vrsta podloge utječe na broj aseva u meču. 
 
 
 # Možemo li predvidjeti trajanje meča (u minutama) na temelju broja gemova, aseva i dvostrukih pogrešaka?
 
+Ispituje se ovisnost trajanja meča (u minutama) temeljem broja gemova, aseva i dvostrukih pogrešaka za što je prikladno koristiti model višestruke linearne regresije. Pretpostavke svakog modela linearne regresije su linearnost veze reakcije i regresora, te nezavisnost, homogenost i normalnost pogrešaka. Dodatno, za višestruku linearnu regeresiju potrebno je pokazati da regresori nemaju visok stupanj korelacije.
+
 Podaci koji su nam potrebni zapisani su odvojeno za pobjednike i gubitnike pa ih je potrebno zbrojiti u jednu varijablu.
+
 ```{r}
 matches_reg <- matches
 matches_reg$aces <- matches_reg$w_ace + matches_reg$l_ace
@@ -432,8 +460,8 @@ matches_reg$gems <- matches_reg$w_SvGms + matches_reg$l_SvGms
 
 ```
 
+Brišemo nepostojeće vrijednosti iz skupa podataka, također brišemo stršeće vrijednosti zbog nekonzistentnosti podataka za male vrijednosti trajanja mečeva (npr. meč koji traje jednu minutu i ima 12 odigranih gemova). Takvih mečeva nema puno pa ih je opravdano izbaciti iz skupa podataka.
 
-Brišemo nepostojeće vrijednosti iz skupa podataka.
 ```{r}
 matches_reg<- matches_reg[is.na(matches_reg$aces) == F & is.na(matches_reg$df) == F & is.na(matches_reg$gems) == F & is.na(matches_reg$minutes)== F, ]
 
@@ -442,21 +470,27 @@ matches_reg[matches_reg$minutes <= 5, ] %>% count()
 matches_reg <- matches_reg[matches_reg$minutes > 5 & matches_reg$minutes < 600, ]
 ```
 
-
+U sljedećem odlomku provjeravamo pretpostavku pri korištenju višestruke linearne regresije da ne postoji visok stupanj korelacije između regresora. 
 
 ```{r}
-cor(cbind(matches_reg$aces,matches_reg$df,matches_reg$gems)) # korelacijski koeficijenti parova regresora
+cor(cbind(matches_reg$aces,matches_reg$df,matches_reg$gems))
 ```
+
+Sljedećim odlomkom stvara se model višestruke linearne regresije sa sva 3 regresora i ispisuju se sve bitne mjere za njega.
+
 ```{r}
 fit.multi <- lm(minutes ~ aces + df + gems, matches_reg)
-fit.multi.bezdf <- lm(minutes ~ aces + gems, matches_reg)
 summary(fit.multi)
+```
+
+Po koeficijentu determinacije vidi se da model objašnjava 82.44% varijance u trajanju meča. Unatoč tome, dodatno pojednostavljujemo model izbacivanjem varijable dvostrukih pogrešaka radi visoke p-vrijednosti koja ukazuje da njen koeficijent nije značajan u modelu.
+
+```{r}
+fit.multi.bezdf <- lm(minutes ~ aces + gems, matches_reg)
 summary(fit.multi.bezdf)
 ```
 
-Na temelju ispisa funkcije summary na razini značajnosti od 5% ne možemo odbaciti hipotezu da dvostruke pogreške nemaju linearan utjecaj na dani model, odnosno na mi.
-
-
+Jedna od pretpostavki svakog modela linearne regresije je normalnost reziduala koju provjeravamo u nastavku.
 
 ```{r, fig.width=8, fig.height=6}
 par(mfrow = c(2, 2), mar = c(4,4,2,1))
@@ -468,7 +502,11 @@ plot(fit.multi$fitted.values, fit.multi.bezdf$residuals) #reziduali u ovisnosti 
 qqnorm(rstandard(fit.multi))
 qqline(rstandard(fit.multi))
 
-ks.test(rstandard(fit.multi.bezdf), 'pnorm') # diskretne varijable javljaju warning
 lillie.test(rstandard(fit.multi.bezdf))
 
 ```
+
+Lillieforsov test ukazuje da reziduali ne prate normalnu razdiobu, međutim to se može objasniti osjetljivošću testa na velike skupove podataka. Iz dijagrama se može očitati da reziduali ne odstupaju značajno od normalne razdiobe.
+
+Temeljem p-vrijednosti F-testa i prethodno navedenog na razini značajnosti od alfa = 0.05 zaključujemo da je
+model linearne regresije adekvatan za prikaz odnosa između reakcije i regresora, odnosno odbacujemo nultu hipotezu da model nije adekvatan. S obzirom na to da smo pokazali postojanje linearne veze između trajanja meča u minutama i broja gemova, aseva i dvostrukih pogrešaka, zaključujemo da se temeljem istih može predvidjeti trajanje meča u minutama.
