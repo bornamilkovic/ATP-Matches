@@ -10,6 +10,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(tibble)
 library(dplyr)
 library(ggplot2)
 library(gridExtra)
@@ -22,31 +23,39 @@ library(nortest)
 Učitavanje podataka i pregled podatkovnog okvira:
 
 ```{r}
-# učitavanje podatkovnog okvira
-matches <- list.files("data/", pattern = "\\.csv$", full.names = TRUE) %>% map_df(read_csv, show_col_types = FALSE) %>% suppressWarnings()
-
+matches <- list.files("data/", pattern = "\\.csv$", full.names = TRUE) %>% 
+  map_df(read_csv, show_col_types = FALSE) %>% suppressWarnings()
 dim(matches)
+#glimpse(matches) - detaljan pregled skupa podataka i varijabli
 ```
 
 Podatci se sastoje od 194379 mečeva i 49 njihovih opisa (varijabli).
 
-Te varijable i njihove klase (tipovi) su sljedeće:
+Pogledajmo nazive tih varijabli:
 
 ```{r}
-faktori <- c("tourney_name", "surface", "draw_size", "tourney_level", "winner_hand", "winner_ioc", "loser_hand", "best_of", "round")
-matches[faktori] <- lapply(matches[faktori], as.factor)
-sapply(matches, class)
+names(matches)
 ```
 
-Skup podataka se pretežito sastoji od “integer” i “factor” podataka. Pretvorili smo sami neke varijable u kategorijske podatke ("factor") jer one ne predstavljaju brojčane vrijednosti već kategorije. Programski paket R nudi široku podršku za rad s kategorijskim podatcima - od factor tipa podataka, do raznih statističkih alata i testova za analizu kategorijskih varijabli.
+Određene varijable prepoznajemo kao kategorijske jer imaju određen broj mogućih vrijednosti. Korištenjem funkcije `as.factor`, pretvaramo ih u kategorijski tip `factor`. Programski paket R nudi široku podršku za rad s kategorijskim podatcima - od factor tipa podataka, do raznih statističkih alata i testova za analizu kategorijskih varijabli.
 
 ```{r}
-print('Prvih nekoliko redaka u varijablama koje koristimo: ')
-str(matches[, c("winner_hand", "tourney_level", "surface",
-                "minutes",
-                "w_SvGms", "l_SvGms",
-                "w_df", "l_df",
-                "w_ace", "l_ace")])
+faktori <- c("tourney_name", "surface", "draw_size", "tourney_level", 
+             "winner_hand", "winner_ioc", "loser_hand", "best_of", "round")
+matches[faktori] <- lapply(matches[faktori], as.factor)
+```
+
+
+
+
+Skup podataka sada se pretežito sastoji od brojčanih i “factor” podataka. Pogledajmo sada prvih nekoliko redaka s varijablama koje ćemo koristiti u daljnjoj analizi.
+
+```{r}
+matches  %>% select(winner_hand, tourney_level, surface,
+                minutes,
+                w_SvGms, l_SvGms,
+                w_df, l_df,
+                w_ace, l_ace) %>% head(10)
 
 ```
 
@@ -55,48 +64,37 @@ Vidimo da puno podataka nedostaje (barem u prvih nekoliko redaka). Provjerimo ko
 ```{r}
 for (col_name in names(matches)){
   if (sum(is.na(matches[,col_name])) > 0){
-    cat('Ukupno nedostajućih vrijednosti za varijablu ',col_name, ': ', sum(is.na(matches[,col_name])),'\n')
+    cat('Ukupno nedostajućih vrijednosti za varijablu ',col_name, 
+        ': ', sum(is.na(matches[,col_name])),'\n')
   }
 }
 ```
 
 Iz priloženog možemo vidjeti da najviše podataka nedostaje za varijable winner_entry, loser_seed i loser_entry (više od 80%), no te varijable nećemo niti koristiti u analizi mečeva tako da ih nećemo uklanjati. Velik broj podataka nedostaje i kod ostalih varijabli poput statistike servisa i poena, trajanja meča, rankinga, bodova... Većina tih podataka nedostaje na početku skupa podataka u kojem se nalaze podaci još od 1968. godine (početak Open ere) kada se ti podaci nisu bilježili ni mjerili, dok su npr. ATP rankinzi uvedeni tek 1973. godine.
 
-Promotrimo sada kako izgledaju neke od varijabli nad kojima ćemo kasnije provesti analizu.
+Promotrimo sada kako izgledaju neke od varijabli nad kojima ćemo kasnije provesti analizu. 
 
 ```{r}
-summary(
-  transform(
-    matches[
-      ,
-      c("winner_hand", "tourney_level", "surface",
-        "minutes",
-        "w_SvGms", "l_SvGms",
-        "w_df", "l_df",
-        "w_ace", "l_ace")
-    ],
-    total_aces  = w_ace + l_ace,
-    total_df    = w_df + l_df,
-    total_SvGms = w_SvGms + l_SvGms
-  )[ ,
-    c("winner_hand", "tourney_level", "surface",
-      "minutes",
-      "total_aces", "total_df", "total_SvGms")
-  ]
-)
-```
 
+summary(matches[, c("winner_hand", "tourney_level", "surface", "minutes", 
+                    "w_SvGms", "l_SvGms", "w_df", "l_df", "w_ace", "l_ace")])
+```
 Promotrimo najprije numeričke varijable.
 
 ```{r}
 par(mfrow = c(2, 2))
-h1 <- hist(matches$w_ace + matches$l_ace, main = "Ukupno aseva po mecu", xlab = "Asevi", ylab = "Frekvencija", breaks = 50)
+h1 <- hist(matches$w_ace + matches$l_ace, main = "Ukupno aseva po mecu",
+           xlab = "Asevi", ylab = "Frekvencija", breaks = 50)
 
-h2 <- hist(matches$w_df + matches$l_df, main = "Ukupno dvostrukih pogresaka po mecu", xlab = "Dvostruke pogreske", ylab = "Frekvencija", breaks = 50)
+h2 <- hist(matches$w_df + matches$l_df,
+           main = "Ukupno dvostrukih pogresaka po mecu",
+           xlab = "Dvostruke pogreske", ylab = "Frekvencija", breaks = 50)
 
-h3 <- hist(matches$w_SvGms + matches$l_SvGms, main = "Ukupno gemova po mecu", xlab = "Gemovi", ylab = "Frekvencija", breaks = 50)
+h3 <- hist(matches$w_SvGms + matches$l_SvGms, main = "Ukupno gemova po mecu",
+           xlab = "Gemovi", ylab = "Frekvencija", breaks = 50)
 
-h4 <- hist(matches$minutes, main = "Trajanje meca (u minutama)", xlab = "Minute", ylab = "Frekvencija", breaks = 50)
+h4 <- hist(matches$minutes, main = "Trajanje meca (u minutama)",
+           xlab = "Minute", ylab = "Frekvencija", breaks = 50)
 
 
 ```
@@ -105,16 +103,23 @@ Pokušajmo log transformacijom i izbacivanjem ekstremnih vrijednosti približiti
 
 ```{r}
 par(mfrow = c(2, 2))
-h_log1 <- hist(log(matches$w_ace + matches$l_ace), main = "Ukupno aseva po mecu", xlab = "Asevi", ylab = "Frekvencija", breaks = 10)
+h_log1 <- hist(log(matches$w_ace + matches$l_ace), main = "Ukupno aseva po mecu",
+               xlab = "Asevi", ylab = "Frekvencija", breaks = 10)
 
-h_log2 <- hist(log(matches$w_df + matches$l_df), main = "Ukupno dvostrukih pogresaka po mecu", xlab = "Dvostruke pogreske", ylab = "Frekvencija", breaks = 10)
+h_log2 <- hist(log(matches$w_df + matches$l_df),
+               main = "Ukupno dvostrukih pogresaka po mecu",
+               xlab = "Dvostruke pogreske", ylab = "Frekvencija", breaks = 10)
 
 total_gems <- matches$w_SvGms + matches$l_SvGms
 cutoff <- quantile(total_gems, 0.99, na.rm = TRUE)
-h_log3 <- hist(total_gems[total_gems <= cutoff], main = "Ukupno gemova po mecu (<= P99)", xlab = "Gemovi", ylab = "Frekvencija", breaks = 30)
+h_log3 <- hist(total_gems[total_gems <= cutoff],
+               main = "Ukupno gemova po mecu (<= P99)", xlab = "Gemovi",
+               ylab = "Frekvencija", breaks = 30)
 
 cutoff <- quantile(matches$minutes, 0.99, na.rm = TRUE)
-h_log4 <- hist(matches$minutes[matches$minutes <= cutoff], main = "Trajanje meca (u minutama) (<= P99)", xlab = "Minute", ylab = "Frekvencija", breaks = 30)
+h_log4 <- hist(matches$minutes[matches$minutes <= cutoff],
+               main = "Trajanje meca (u minutama) (<= P99)", xlab = "Minute",
+               ylab = "Frekvencija", breaks = 30)
 
 ```
 
@@ -137,7 +142,8 @@ print('Broj mečeva po razini turnira: ')
 table(matches$tourney_level)
 ```
 ```{r}
-barplot(table(unique(matches[, c("tourney_id", "tourney_level")])$tourney_level), las=2, main='Broj turnira po razini turnira')
+barplot(table(unique(matches[, c("tourney_id", "tourney_level")])$tourney_level),
+        las=2, main='Broj turnira po razini turnira')
 ```
 
 ```{r, results = "hold"}
@@ -156,12 +162,15 @@ Isto tako, ovdje vidimo vrste turnira i broj setova koji se igra na pojedinom tu
 ```{r}
 barplot(table(matches$surface),las=2,main='Broj meceva na svakoj podlozi')
 ```
+
 ```{r, results = "hold"}
 print('Broj mečeva na svakoj podlozi: ')
 table(matches$surface)
 ```
+
 ```{r}
-barplot(table(unique(matches[, c("tourney_id", "surface")])$surface),las=2,main='Broj turnira na svakoj podlozi')
+barplot(table(unique(matches[, c("tourney_id", "surface")])$surface),
+        las=2, main='Broj turnira na svakoj podlozi')
 ```
 
 ```{r, results = "hold"}
@@ -216,7 +225,10 @@ print(added_margins_tbl)
 for (col_names in colnames(added_margins_tbl)){
   for (row_names in rownames(added_margins_tbl)){
     if (!(row_names == 'Sum' | col_names == 'Sum') ){
-      cat('Očekivane frekvencije za razred ',col_names,'-',row_names,': ',(added_margins_tbl[row_names,'Sum'] * added_margins_tbl['Sum',col_names]) / added_margins_tbl['Sum','Sum'],'\n')
+      cat('Očekivane frekvencije za razred ',col_names,'-',row_names,': ',
+          (added_margins_tbl[row_names,'Sum'] * 
+             added_margins_tbl['Sum',col_names]) / 
+            added_margins_tbl['Sum','Sum'],'\n')
     }
   }
 }
@@ -235,7 +247,10 @@ print(added_margins_tbl)
 for (col_names in colnames(added_margins_tbl)){
   for (row_names in rownames(added_margins_tbl)){
     if (!(row_names == 'Sum' | col_names == 'Sum') ){
-      cat('Očekivane frekvencije za razred ',col_names,'-',row_names,': ',(added_margins_tbl[row_names,'Sum'] * added_margins_tbl['Sum',col_names]) / added_margins_tbl['Sum','Sum'],'\n')
+      cat('Očekivane frekvencije za razred ',col_names,'-',row_names,': ',
+          (added_margins_tbl[row_names,'Sum'] * 
+             added_margins_tbl['Sum',col_names]) / 
+            added_margins_tbl['Sum','Sum'],'\n')
     }
   }
 }
@@ -266,7 +281,8 @@ Kako u podacima nema atributa koji navodi ukupan broj gemova po meču, računamo
 table(matches$surface)
 
 # izbaci NA vrijednosti
-matches2 <- matches[is.na(matches$surface) == F & is.na(matches$w_SvGms) == F & is.na(matches$l_SvGms) == F,]
+matches2 <- matches[is.na(matches$surface) == F & is.na(matches$w_SvGms) == F & 
+                      is.na(matches$l_SvGms) == F,]
 
 #dodaj stupac s ukupnim brojem gemova
 matches2 <- mutate(matches2, games = matches2$w_SvGms + matches2$l_SvGms)
@@ -375,7 +391,8 @@ matches_anova <- matches
 matches_anova$aces <- matches_anova$w_ace + matches_anova$l_ace
 matches_anova$surface <- as.factor(matches_anova$surface)
 
-matches_anova <- matches_anova[is.na(matches_anova$aces) == F & is.na(matches_anova$surface) == F, ]
+matches_anova <- matches_anova[is.na(matches_anova$aces) == F & 
+                                 is.na(matches_anova$surface) == F, ]
 matches_anova <- matches_anova[matches_anova$aces < 200, ]
 ```
 
@@ -388,10 +405,14 @@ U idućem odlomku ispitujemo normalnost pojedinih populacija.
 
 ```{r, fig.width=8, fig.height=6}
 par(mfrow = c(2, 2), mar = c(4,4,2,1))
-hist(matches_anova$aces[matches_anova$surface=='Grass'], xlab = "aces", main = "Asevi na travi")
-hist(matches_anova$aces[matches_anova$surface=='Clay'], xlab = "aces", main = "Asevi na zemlji")
-hist(matches_anova$aces[matches_anova$surface=='Carpet'], xlab = "aces", main = "Asevi na tepihu")
-hist(matches_anova$aces[matches_anova$surface=='Hard'], xlab = "aces", main = "Asevi na tvrdoj podlozi")
+hist(matches_anova$aces[matches_anova$surface=='Grass'], 
+     xlab = "aces", main = "Asevi na travi")
+hist(matches_anova$aces[matches_anova$surface=='Clay'], 
+     xlab = "aces", main = "Asevi na zemlji")
+hist(matches_anova$aces[matches_anova$surface=='Carpet'], 
+     xlab = "aces", main = "Asevi na tepihu")
+hist(matches_anova$aces[matches_anova$surface=='Hard'], 
+     xlab = "aces", main = "Asevi na tvrdoj podlozi")
 ```
 
 Uvidom u prikaz podataka da se zaključiti da bi logaritamska transformacija mogla poboljšati normalnost podataka. Osim toga, postoji mogućnost da varijabla broja aseva poprimi vrijednost 0 za što logaritam vraća nepostojeću vrijednost. Kako ne bismo izgubili utjecaj tih podataka na sveukupni model, svakom podatku pridodajemo jedan as što će omogućiti nesmetano korištenje logaritamske transformacije bez posljedica na konačno rješenje modela.
@@ -410,10 +431,14 @@ lillie.test(matches_anova_log$aces[matches_anova_log$surface=='Carpet'])
 lillie.test(matches_anova_log$aces[matches_anova_log$surface=='Hard'])
 
 par(mfrow = c(2, 2), mar = c(4,4,2,1))
-hist(matches_anova_log$aces[matches_anova_log$surface=='Grass'], xlab = "log(aces)", main = "Asevi na travi")
-hist(matches_anova_log$aces[matches_anova_log$surface=='Clay'], xlab = "log(aces)", main = "Asevi na zemlji")
-hist(matches_anova_log$aces[matches_anova_log$surface=='Carpet'], xlab = "log(aces)", main = "Asevi na tepihu")
-hist(matches_anova_log$aces[matches_anova_log$surface=='Hard'], xlab = "log(aces)", main = "Asevi na tvrdoj podlozi")
+hist(matches_anova_log$aces[matches_anova_log$surface=='Grass'], 
+     xlab = "log(aces)", main = "Asevi na travi")
+hist(matches_anova_log$aces[matches_anova_log$surface=='Clay'], 
+     xlab = "log(aces)", main = "Asevi na zemlji")
+hist(matches_anova_log$aces[matches_anova_log$surface=='Carpet'], 
+     xlab = "log(aces)", main = "Asevi na tepihu")
+hist(matches_anova_log$aces[matches_anova_log$surface=='Hard'], 
+     xlab = "log(aces)", main = "Asevi na tvrdoj podlozi")
 ```
 
 Uvidom na Lillieforsov test može se zaključiti da podatci ne dolaze iz normalne razdiobe, međutim grafovi ukazuju na to da razdioba podataka ne odstupa značajno od normalne razdiobe. Uz to, veličine uzoraka pojedinih kategorija značajno se razlikuju što umanjuje robustnost testa na odstupanje od pretpostavki.
@@ -463,11 +488,14 @@ matches_reg$gems <- matches_reg$w_SvGms + matches_reg$l_SvGms
 Brišemo nepostojeće vrijednosti iz skupa podataka, također brišemo stršeće vrijednosti zbog nekonzistentnosti podataka za male vrijednosti trajanja mečeva (npr. meč koji traje jednu minutu i ima 12 odigranih gemova). Takvih mečeva nema puno pa ih je opravdano izbaciti iz skupa podataka.
 
 ```{r}
-matches_reg<- matches_reg[is.na(matches_reg$aces) == F & is.na(matches_reg$df) == F & is.na(matches_reg$gems) == F & is.na(matches_reg$minutes)== F, ]
+matches_reg<- matches_reg[is.na(matches_reg$aces) == F & 
+                            is.na(matches_reg$df) == F & 
+                            is.na(matches_reg$gems) == F & 
+                            is.na(matches_reg$minutes)== F, ]
 
 matches_reg[matches_reg$minutes <= 5, ] %>% count()
 
-matches_reg <- matches_reg[matches_reg$minutes > 5 & matches_reg$minutes < 600, ]
+matches_reg <- matches_reg[matches_reg$minutes > 5 & matches_reg$minutes < 600,]
 ```
 
 U sljedećem odlomku provjeravamo pretpostavku pri korištenju višestruke linearne regresije da ne postoji visok stupanj korelacije između regresora. 
@@ -497,7 +525,7 @@ par(mfrow = c(2, 2), mar = c(4,4,2,1))
 hist((fit.multi.bezdf$residuals), breaks = 100, xlim = range(-100, 100))
 hist(rstandard(fit.multi.bezdf), breaks = 100, xlim = range(-5, 5))
 
-plot(fit.multi$fitted.values, fit.multi.bezdf$residuals) #reziduali u ovisnosti o procjenama modela
+plot(fit.multi$fitted.values, fit.multi.bezdf$residuals)
 
 qqnorm(rstandard(fit.multi))
 qqline(rstandard(fit.multi))
