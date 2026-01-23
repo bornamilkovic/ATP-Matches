@@ -259,7 +259,9 @@ for (col_names in colnames(added_margins_tbl)){
 
 Sada su sve očekivane frekvencije veće od 5, nastavljamo s Chi2 testom.
 Hipoteze:
+
   H0: Distribucija pobjeda po ruci nije povezana s vrstom turnira(varijable su nezavisne).
+  
   H1: Distribucija pobjeda po ruci je povezana s vrstom turnira(varijable nisu nezavisne).
 
 Test provodimo na razini značajnosti alfa = 0.05.
@@ -351,7 +353,9 @@ var(grass_matches$games)
 Temeljem gornjeg rezultata sumnjamo na različitost varijanci populacija. Provodimo Fischerov test da potvrdimo sumnju.
 
 Hipoteze Fischerovog testa jednakosti varijanci:
+
   H0: Varijance su jednake
+  
   H1: Varijance su različite
 
 Test provodimo na razini značajnosti alfa = 0.05.
@@ -366,7 +370,9 @@ S obzirom na to da je p-vrijednost << 0.05, odbacujemo H0 u korist H1. Zaključu
 Kako bismo odgovorili na pitanje o broju gemova na travi i zemlji, provodimo t-test s pretpostavkom različitih varijanci.
 
 Hipoteze:
+
   H0: Prosječan broj gemova je jednak na zemlji i na travi.
+  
   H1: Prosječan broj gemova je manji na travi, nego na zemlji.
 
 Test provodimo na razini značajnosti alfa = 0.05.
@@ -398,7 +404,9 @@ matches_anova <- matches_anova[matches_anova$aces < 200, ]
 
 Pretpostavke ANOVA-e su nezavisnost podataka u uzorcima, normalna razdioba podataka i homogenost varijanci među populacijama.
 Hipoteze ANOVA testa su:
+
   H0: Srednje vrijednosti svih populacija su jednake.
+  
   H1: Postoji barem jedan par populacija koje imaju različite srednje vrijednosti.
 
 U idućem odlomku ispitujemo normalnost pojedinih populacija.
@@ -445,7 +453,9 @@ Uvidom na Lillieforsov test može se zaključiti da podatci ne dolaze iz normaln
 
 Testiranje homogenosti varijance uzoraka Bartlettovim testom
 Hipoteze Bartlettovog testa su:
+
   H0: Varijance svih populacija su jednake.
+  
   H1: Postoji barem jedan par varijanci populacija koje su različite.
   
 ```{r}
@@ -461,7 +471,7 @@ var((matches_anova_log$aces[matches_anova_log$surface=='Hard']))
 Bartlettov test ukazuje na nehomogenost varijanci. Unatoč tome, pogledom na vrijednosti varijance populacija vidimo da jedino druga populacija značajno odstupa od ostalih varijanci pa odlučujemo nastaviti s testom.
 
 ```{r}
-boxplot(matches_anova_log$aces ~ matches_anova_log$surface)
+boxplot(matches_anova_log$aces ~ matches_anova_log$surface, xlab = "Podloga", ylab = "Asevi", main = "Boxplot logaritmiranog broja aseva po podlogama")
 
 a = aov(matches_anova_log$aces ~ matches_anova_log$surface)
 summary(a)
@@ -493,7 +503,9 @@ matches_reg<- matches_reg[is.na(matches_reg$aces) == F &
                             is.na(matches_reg$gems) == F & 
                             is.na(matches_reg$minutes)== F, ]
 
-matches_reg[matches_reg$minutes <= 5, ] %>% count()
+strsece_vrijednosti <- matches_reg[matches_reg$minutes <= 5 | 
+                                     matches_reg$minutes >= 600, ] %>% count()
+cat ("Broj stršećih vrijednosti: ", strsece_vrijednosti$n)
 
 matches_reg <- matches_reg[matches_reg$minutes > 5 & matches_reg$minutes < 600,]
 ```
@@ -517,6 +529,13 @@ Po koeficijentu determinacije vidi se da model objašnjava 82.44% varijance u tr
 fit.multi.bezdf <- lm(minutes ~ aces + gems, matches_reg)
 summary(fit.multi.bezdf)
 ```
+
+Model koji smo dobili opisan je sljedećom formulom: 
+
+```{r}
+cat("Minute = ", coef(fit.multi.bezdf)[2], " * asevi + " ,coef(fit.multi.bezdf)[3], " * gemovi ", coef(fit.multi.bezdf)[1])
+```
+
 
 Jedna od pretpostavki svakog modela linearne regresije je normalnost reziduala koju provjeravamo u nastavku.
 
