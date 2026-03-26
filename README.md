@@ -1,25 +1,81 @@
-# ATP-Matches - Analiza rezultata teniskih mečeva
+# 🎾 ATP Match Analysis
 
-## Motivacija i opis problema
-Analiza podataka o teniskim mečevima omogućuje dublje razumijevanje faktora koji utječu na uspješnost
-igrača i ishod mečeva. Takvi uvidi korisni su trenerima pri izradi strategija, igračima u pripremi za različite
-uvjete natjecanja te organizatorima turnira pri planiranju i optimizaciji rasporeda. U okviru ovog projekta
-analiziraju se detaljni podaci o profesionalnim ATP mečevima od 1991. do 2024. s ciljem prepoznavanja
-obrazaca i odnosa izmedu različitih varijabli koji mogu utjecati na performanse igrača i rezultate mečeva.
+A data analysis project exploring ATP tennis matches to uncover player performance trends, ranking dynamics, and potential predictive insights.
 
-## Opis skupa podataka i opis projekta
-Skup podataka obuhvaća podatke o više od 170,000 profesionalnih mečeva odigranih od 1991. do 2024.
-godine. Svaki zapis sadrži osnovne informacije o turniru, igračima i uvjetima meča, kao i detaljne pokazatelje
-performansi poput broja aseva, dvostrukih pogrešaka, postotka pogođenih prvih servisa, ukupnog broja
-osvojenih poena, trajanja meča i vrste podloge na kojoj je odigran.
+---
 
-Pri izradi projekta vodili smo se ovim istraživačkim pitanjima:
+## 📌 Overview
 
-• Je li distribucija pobjeda po ruci kojom se igra povezana s vrstom turnira? 
+This project was developed as part of a *Statistical Data Analysis* course, with the goal of applying statistical methods to real-world data.
 
-• Imaju li mečevi odigrani na travi prosječno manje gemova od mečeva na zemlji?
+Using historical ATP match data, we explored and answered four key statistical questions related to player performance, rankings, and match outcomes.
 
-• Mijenja li se prosječan broj aseva po meču ovisno o vrsti podloge?
+The project demonstrates practical use of data analysis techniques, statistical reasoning, and data visualization.
 
-• Možemo li predvidjeti trajanje meča (u minutama) na temelju broja gemova, aseva i dvostrukih pogrešaka?
+---
 
+## 📊 Statistical Questions
+
+As part of the project, we investigated the following statistical questions:
+
+1. **Is the distribution of match wins by playing hand associated with the type of tournament?**
+2. **Do matches played on grass have, on average, fewer games than matches played on clay?**
+3. **Does the average number of aces per match vary depending on the playing surface?**
+4. **Can we predict match duration (in minutes) based on the number of games, aces, and double faults?**
+
+Each question is explored using statistical analysis and visualizations in the notebooks.
+---
+
+## 🛠 Tools & Technologies
+
+* R
+* RStudio
+
+---
+
+## 📂 Project Structure
+
+```
+ATP-Matches/
+│── data/                # Raw and/or processed datasets
+│── PDF_report/           # Jupyter notebooks with analysis
+│── R_Markdown/             # Data processing or helper scripts
+│── README.md
+│── LICENCE.md
+```
+
+---
+
+## 🚀 Getting Started
+
+Open the pdf report inside PDF_report folder to explore the analysis.
+
+---
+
+## 📈 Future Improvements
+
+* Build a match outcome prediction model
+* Add interactive visualizations
+* Implement Elo rating system
+* Create a dashboard for insights
+
+---
+
+## 📊 Data Source
+
+This project uses publicly available ATP match data:
+
+* https://github.com/JeffSackmann/tennis_atp
+
+All credit for the dataset goes to the original author.
+
+---
+
+## 🎓 Academic Context
+
+This project was completed as part of the *Statistical Data Analysis* course.
+
+The objective was to apply statistical techniques to a real dataset, formulate research questions, and interpret the results in a meaningful way.
+
+
+---
