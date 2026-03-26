@@ -7,3 +7,7 @@ Projekt.log
 Projekt.tex
 .RDataTmp
 .RDataTmp1
+.gitattributes
+ATP-Matches.Rproj
+.idea/
+.RDataTmp2
