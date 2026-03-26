@@ -37,9 +37,9 @@ Each question is explored using statistical analysis and visualizations in the n
 
 ```
 ATP-Matches/
-│── data/                # Raw and/or processed datasets
-│── PDF_report/           # Jupyter notebooks with analysis
-│── R_Markdown/             # Data processing or helper scripts
+│── data/                # Raw data of tennis matches from 1985
+│── PDF_report/           # PDf report with analysis
+│── R_Markdown/             # R code which produced the pdf
 │── README.md
 │── LICENCE.md
 ```
